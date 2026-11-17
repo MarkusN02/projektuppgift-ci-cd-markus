@@ -43,3 +43,14 @@ jobs:
           path: reports/pytest.xml
           if-no-files-found: warn
 
+  docker-build:
+    name: Build Docker Image
+    needs: test-and-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Build Docker image
+        run: docker build -t cicd-calc-api:${{ github.sha }} .
+
