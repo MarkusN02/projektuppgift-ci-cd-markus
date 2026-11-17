@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs: 
-  hello:
-    name: Hello Pipeline
+  test-and-lint:
+    name: Test and Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -22,8 +22,14 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Show environment
+      - name: Install dependencies
         run: |
-          python --version
-          echo "Trigger: $GITHUB_EVENT_NAME"
-          echo "Commit: $GITHUB_SHA"
+          python3 -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run Ruff
+        run: python3 -m ruff check app tests
+
+      - name: Run tests
+        run: python3 -m pytest -v
+
