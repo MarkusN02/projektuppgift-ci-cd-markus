@@ -22,8 +22,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Show enviroment
+      - name: Show environment
         run: |
           python --version
-          echo "Trigger: @GITHUB_EVENT_NAME"
-          echo "Commit: @GITHUB_SHA"
+          echo "Trigger: $GITHUB_EVENT_NAME"
+          echo "Commit: $GITHUB_SHA"
