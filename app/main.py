@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 from app.service import add, divide
 
@@ -14,4 +14,7 @@ def add_endpoint (a: float, b: float):
 
 @app.get("/divide")
 def divide_endpoint (a: float, b: float):
-    return {"result": divide(a, b)}
+    try:
+        return {"result": divide(a, b)}
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
