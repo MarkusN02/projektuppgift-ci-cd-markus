@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI, HTTPException
 
 from app.service import add, divide
@@ -18,3 +20,7 @@ def divide_endpoint (a: float, b: float):
         return {"result": divide(a, b)}
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
+
+@app.get("/version")
+def version():
+    return {"version": os.getenv("APP_VERSION", "dev")}
