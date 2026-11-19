@@ -1,0 +1,56 @@
+name: Deploy Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git-tagg att driftsätta, t.ex. v1.0.0"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-version:
+    name: Deploy selected version
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ inputs.ref }}
+    steps:
+      - name: Checkout selected version
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Build Docker image
+        run: docker build --build-arg APP_VERSION="$VERSION" -t cicd-calc-api:"$VERSION" .
+
+      - name: Start application
+        run: docker run -d --name cicd-calc-api -p 8000:8000 cicd-calc-api:"$VERSION"
+
+      - name: Verify health
+        run: |
+          for i in {1..10}; do
+            if curl --fail --silent http://localhost:8000/health; then
+              echo
+              echo "Health check OK"
+              exit 0
+            fi
+            echo "Waiting for application..."
+            sleep 2
+          done
+          echo "Health check failed"
+          docker logs cicd-calc-api
+          exit 1
+
+      - name: Verify version
+        run: |
+          set -o pipefail
+          curl --fail --silent http://localhost:8000/version \
+            | python3 -c 'import json,os,sys; assert json.load(sys.stdin)["version"] == os.environ["VERSION"]'
+          echo "Version $VERSION deployed"
+
+      - name: Stop application
+        if: always()
+        run: docker rm -f cicd-calc-api || true
