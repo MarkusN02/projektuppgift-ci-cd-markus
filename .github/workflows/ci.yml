@@ -82,3 +82,37 @@ jobs:
       - name: Stop container
         if: always()
         run: docker rm -f cicd-calc-api || true
+
+  deploy-simulated:
+    name: Simulated Deployment
+    needs: docker-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Build Docker image
+        run: docker build -t cicd-calc-api:${{ github.sha }} .
+
+      - name: Start application
+        run: docker run -d --name cicd-calc-api -p 8000:8000 cicd-calc-api:${{ github.sha }} 
+      
+      - name: Verify deployment
+        run: |
+          for i in {1..10}; do
+            if curl --fail --silent http://localhost:8000/health; then
+              echo
+              echo "Deployment verified: commit ${{ github.sha }}"
+              exit 0
+            fi
+            echo "Waiting for application..."
+            sleep 2
+          done
+          echo "Deployment verification failed"
+          docker logs cicd-calc-api
+          exit 1
+      
+      - name: Stop application
+        if: always()
+        run: docker rm -f cicd-calc-api || true
