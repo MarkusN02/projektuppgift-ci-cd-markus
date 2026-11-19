@@ -32,3 +32,15 @@ def test_divide_by_zero_endpoint():
 def test_add_invalid_input():
     response = client.get("/add", params={"a": "x", "b": 3})
     assert response.status_code == 422
+
+def test_version_default(monkeypatch):
+    monkeypatch.delenv("APP_VERSION", raising=False)
+    response = client.get("/version")
+    assert response.status_code == 200
+    assert response.json() == {"version": "dev"}
+
+
+def test_version_from_environment(monkeypatch):
+    monkeypatch.setenv("APP_VERSION", "1.2.3")
+    response = client.get("/version")
+    assert response.json() == {"version": "1.2.3"}
