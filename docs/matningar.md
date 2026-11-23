@@ -24,3 +24,18 @@ Summary-sida i GitHub Actions.
 - Körtiderna varierar mellan körningar (Build 14-27 s), så vi jämför medelvärden.
 - Runt 8 s går åt till uppstart av runner mellan jobben.
 - Imagen byggs två gånger (Build och Simulated Deployment).
+
+## Steg 12: Pip-cache
+
+Ändring: `cache: pip` i setup-python. Mätt på PR-körningen, tre omkörningar
+med cache jämfört med tre körningar på main utan cache.
+
+| | Set up Python | Install dependencies | Summa |
+|---|---|---|---|
+| Före (medel av 3) | 0,3 s | 6,7 s | 7,0 s |
+| Med cache (medel av 3) | 4,0 s | 5,3 s | 9,3 s |
+
+Slutsats: Cachen fungerar (Cache restored successfully) men ger ingen
+nettovinst. Att återställa cachen (~19 MB) tar ungefär lika lång tid som att
+ladda ned paketen, eftersom beroendena är få och nätet på runnern är snabbt.
+Ändringen mergades inte. Kan bli värd att göra om om beroendelistan växer.
