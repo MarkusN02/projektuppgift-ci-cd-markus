@@ -52,7 +52,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Build Docker image
-        run: docker build -t cicd-calc-api:${{ github.sha }} .
+        run: docker build --build-arg APP_VERSION=${{ github.sha }} -t cicd-calc-api:${{ github.sha }} .
 
       - name: Start container
         run: docker run -d --name cicd-calc-api -p 8000:8000 cicd-calc-api:${{ github.sha }}
@@ -79,6 +79,13 @@ jobs:
             | python3 -c 'import json,sys; assert json.load(sys.stdin)["result"] == 5.0'
           echo "Add endpoint OK"
 
+      - name: Verify version matches commit
+        env:
+          COMMIT: ${{ github.sha }}
+        run: |
+          set -o pipefail
+          curl -fsS http://localhost:8000/version | python3 -c 'import json,os,sys; assert json.load(sys.stdin)["version"] == os.environ["COMMIT"]'
+
       - name: Stop container
         if: always()
         run: docker rm -f cicd-calc-api || true
@@ -93,7 +100,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Build Docker image
-        run: docker build -t cicd-calc-api:${{ github.sha }} .
+        run: docker build --build-arg APP_VERSION=${{ github.sha }} -t cicd-calc-api:${{ github.sha }} .
 
       - name: Start application
         run: docker run -d --name cicd-calc-api -p 8000:8000 cicd-calc-api:${{ github.sha }} 
@@ -112,6 +119,13 @@ jobs:
           echo "Deployment verification failed"
           docker logs cicd-calc-api
           exit 1
+
+      - name: Verify version matches commit
+        env:
+          COMMIT: ${{ github.sha }}
+        run: |
+          set -o pipefail
+          curl -fsS http://localhost:8000/version | python3 -c 'import json,os,sys; assert json.load(sys.stdin)["version"] == os.environ["COMMIT"]'
       
       - name: Stop application
         if: always()
